@@ -40,23 +40,15 @@
           <h2>{{ currentQuestion.text }}</h2>
 
           <!-- PDF Button for Q3a and Q3a_nonvoyageur -->
+          <!--
           <button
-            v-if="
-              ['Q3a', 'Q3b', 'Q3a_nv', 'Q3b_nv', 'Q3a_d', 'Q3b_d'].includes(
-                currentQuestion.id
-              )
-            "
-            @click="
-              () => {
-                console.log('Opening PDF modal');
-                console.log('PDF URL:', pdfUrl);
-                showPdf = true;
-              }
-            "
+            v-if="['Q3a', 'Q3b', 'Q3a_nv', 'Q3b_nv', 'Q3a_d', 'Q3b_d'].includes(currentQuestion.id)"
+            @click="() => { console.log('Opening PDF modal'); console.log('PDF URL:', pdfUrl); showPdf = true; }"
             class="btn-pdf"
           >
             Voir le plan du parking
           </button>
+          -->
 
           <!-- Commune Selector for Q2 and Q6 -->
           <div v-if="currentQuestion.id === 'Q2'">
@@ -191,30 +183,18 @@
     </div>
 
     <!-- PDF Modal -->
+    <!--
     <div v-if="showPdf" class="modal">
       <div class="modal-content pdf-content">
-        <button
-          class="close"
-          @click="
-            () => {
-              showPdf = false;
-              console.log('Closing PDF modal');
-            }
-          "
-        >
+        <button class="close" @click="() => { showPdf = false; console.log('Closing PDF modal'); }">
           ×
         </button>
-        <iframe
-          :src="pdfUrl"
-          width="100%"
-          height="500px"
-          type="application/pdf"
-        >
-          This browser does not support PDFs. Please download the PDF to view
-          it.
+        <iframe :src="pdfUrl" width="100%" height="500px" type="application/pdf">
+          This browser does not support PDFs. Please download the PDF to view it.
         </iframe>
       </div>
     </div>
+    -->
   </div>
 </template>
 
