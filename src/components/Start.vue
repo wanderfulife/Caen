@@ -25,7 +25,7 @@
           Bonjour,<br />
           pour mieux connaître les usagers<br />
           de la gare de Caen,<br /><br />
-          la Ville et la SNCF souhaiteraient en savoir plus sur votre
+          Caen la Mer souhaiteraient en savoir plus sur votre
           déplacement en cours.<br />
           Auriez-vous quelques secondes à nous accorder ?
         </h2>
