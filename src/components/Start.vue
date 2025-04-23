@@ -39,16 +39,24 @@
         <div class="question-container">
           <h2>{{ currentQuestion.text }}</h2>
 
-          <!-- PDF Button for Q3a and Q3a_nonvoyageur -->
-          <!--
+          <!-- PDF Button for Q3a / Q3b -->
           <button
-            v-if="['Q3a', 'Q3b', 'Q3a_nv', 'Q3b_nv', 'Q3a_d', 'Q3b_d'].includes(currentQuestion.id)"
-            @click="() => { console.log('Opening PDF modal'); console.log('PDF URL:', pdfUrl); showPdf = true; }"
+            v-if="currentQuestion.id === 'Q3a' || currentQuestion.id === 'Q3b'"
+            @click="() => {
+              if (currentQuestion.id === 'Q3a') {
+                pdfUrl = '/Plan.pdf';
+                console.log('Setting PDF URL to /Plan.pdf');
+              } else if (currentQuestion.id === 'Q3b') {
+                pdfUrl = '/Plan2.pdf';
+                console.log('Setting PDF URL to /Plan2.pdf');
+              }
+              console.log('Opening PDF modal');
+              showPdf = true;
+            }"
             class="btn-pdf"
           >
             Voir le plan du parking
           </button>
-          -->
 
           <!-- Commune Selector for Q2 and Q6 -->
           <div v-if="currentQuestion.id === 'Q2'">
@@ -183,7 +191,6 @@
     </div>
 
     <!-- PDF Modal -->
-    <!--
     <div v-if="showPdf" class="modal">
       <div class="modal-content pdf-content">
         <button class="close" @click="() => { showPdf = false; console.log('Closing PDF modal'); }">
@@ -194,7 +201,6 @@
         </iframe>
       </div>
     </div>
-    -->
   </div>
 </template>
 
