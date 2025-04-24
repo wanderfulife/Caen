@@ -49,6 +49,26 @@
               </li>
             </ul>
           </div>
+          <div class="dashboard-card">
+            <h3>Enquêtes d'Aujourd'hui par Tranche Horaire</h3>
+            <ul>
+              <li
+                v-for="(count, slot) in todaysSurveysByTimeSlot"
+                :key="slot"
+              >
+                <span>{{ slot }}</span>
+                <span class="count">{{ count }}</span>
+              </li>
+            </ul>
+          </div>
+          <div class="dashboard-card">
+            <h3>Enquêtes d'Autres Dates</h3>
+            <p class="big-number" style="color: #f56565;">{{ surveysFromOtherDates }}</p>
+          </div>
+          <div class="dashboard-card">
+            <h3>Aujourd'hui (Heure Manquante)</h3>
+            <p class="big-number" style="color: #ecc94b;">{{ todaysSurveysMissingTime }}</p>
+          </div>
         </div>
         <button @click="downloadData" class="btn-download">
           Télécharger les Données
@@ -70,6 +90,13 @@ const password = ref("");
 const surveysByEnqueteur = ref({});
 const surveysByType = ref({});
 const totalSurveys = ref(0);
+const todaysSurveysByTimeSlot = ref({
+  "06:00 - 10:00": 0,
+  "10:00 - 16:00": 0,
+  "16:00 - 22:00": 0,
+});
+const surveysFromOtherDates = ref(0);
+const todaysSurveysMissingTime = ref(0);
 
 const surveyCollectionRef = collection(db, "Caen");
 
@@ -126,23 +153,88 @@ const fetchAdminData = async () => {
 
     totalSurveys.value = surveys.length;
 
-    surveysByEnqueteur.value = surveys.reduce((acc, survey) => {
-      acc[survey.ENQUETEUR] = (acc[survey.ENQUETEUR] || 0) + 1;
-      return acc;
-    }, {});
+    // Calculate today's date in DD-MM-YYYY format
+    const today = new Date();
+    const todayDateString = `${String(today.getDate()).padStart(2, "0")}-${String(
+      today.getMonth() + 1
+    ).padStart(2, "0")}-${today.getFullYear()}`;
 
-    surveysByType.value = surveys.reduce((acc, survey) => {
+    // Reset counts
+    todaysSurveysByTimeSlot.value = {
+      "06:00 - 10:00": 0,
+      "10:00 - 16:00": 0,
+      "16:00 - 22:00": 0,
+    };
+    surveysFromOtherDates.value = 0;
+    todaysSurveysMissingTime.value = 0;
+
+    const enqueteurCounts = {};
+    const typeCounts = {};
+
+    surveys.forEach((survey) => {
+      // Count by Enqueteur
+      enqueteurCounts[survey.ENQUETEUR] =
+        (enqueteurCounts[survey.ENQUETEUR] || 0) + 1;
+
+      // Count by Type
       let type;
       if (survey.Q1 === 1) {
         type = "Voyageur";
       } else if (survey.Q1 === 2) {
         type = "Non-voyageur";
       } else {
-        type = "Non-voyageur";
+        type = "Non-voyageur"; // Default if Q1 is missing or different
       }
-      acc[type] = (acc[type] || 0) + 1;
-      return acc;
-    }, {});
+      typeCounts[type] = (typeCounts[type] || 0) + 1;
+
+      // Count today's surveys by time slot OR count other dates/missing time
+      const isToday = survey.DATE === todayDateString;
+
+      if (isToday) {
+        let timeToParse = null;
+        // Prioritize HEURE_DEBUT, fallback to HEURE_FIN
+        if (survey.HEURE_DEBUT && survey.HEURE_DEBUT.includes(':')) {
+            timeToParse = survey.HEURE_DEBUT;
+        } else if (survey.HEURE_FIN && survey.HEURE_FIN.includes(':')) {
+            timeToParse = survey.HEURE_FIN;
+        }
+
+        if (timeToParse) {
+            try {
+                const hour = parseInt(timeToParse.split(":")[0], 10);
+                if (!isNaN(hour)) {
+                    if (hour >= 6 && hour < 10) {
+                        todaysSurveysByTimeSlot.value["06:00 - 10:00"]++;
+                    } else if (hour >= 10 && hour < 16) {
+                        todaysSurveysByTimeSlot.value["10:00 - 16:00"]++;
+                    } else if (hour >= 16 && hour < 22) {
+                        todaysSurveysByTimeSlot.value["16:00 - 22:00"]++;
+                    } else {
+                      // Hour outside 6-22 range, count as missing time
+                      todaysSurveysMissingTime.value++;
+                    }
+                } else {
+                    // parseInt resulted in NaN
+                    todaysSurveysMissingTime.value++;
+                     console.warn(`Could not parse hour from time ${timeToParse} for survey ID ${survey.ID_questionnaire}`);
+                }
+            } catch (e) {
+                todaysSurveysMissingTime.value++;
+                console.warn(`Error parsing time ${timeToParse} for survey ID ${survey.ID_questionnaire}`, e);
+            }
+        } else {
+            // Neither HEURE_DEBUT nor HEURE_FIN was valid/present for today's survey
+            todaysSurveysMissingTime.value++;
+        }
+      } else { // Not today
+          surveysFromOtherDates.value++;
+          // Removed logging for other dates
+      }
+    });
+
+    surveysByEnqueteur.value = enqueteurCounts;
+    surveysByType.value = typeCounts;
+
   } catch (error) {
     console.error("Erreur lors de la récupération des données :", error);
   }
@@ -389,6 +481,8 @@ onMounted(() => {
   max-width: 500px;
   padding: 20px 30px;
   height: auto;
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
 .admin-dashboard h2 {
